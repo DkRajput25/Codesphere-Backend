@@ -8,4 +8,6 @@ public interface SnippetRepository extends JpaRepository<Snippet, Long> {
 
     // ✅ Fetch snippets by user_id (fixes object mismatch)
     List<Snippet> findByUserId(Long userId);
+    // ✅ (NEW) For ownership checking – optional but important for security
+    Snippet findByIdAndUserId(Long id, Long userId);
 }

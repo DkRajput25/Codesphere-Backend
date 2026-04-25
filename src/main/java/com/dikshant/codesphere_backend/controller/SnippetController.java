@@ -5,6 +5,7 @@ import com.dikshant.codesphere_backend.model.User;
 import com.dikshant.codesphere_backend.repository.SnippetRepository;
 import com.dikshant.codesphere_backend.repository.UserRepository;
 import com.dikshant.codesphere_backend.security.JwtService;
+import com.dikshant.codesphere_backend.service.SnippetService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,10 @@ public class SnippetController {
 
     @Autowired
     private JwtService jwtService;
+
+    // NEW: service to perform delete + ownership check
+    @Autowired
+    private SnippetService snippetService;
 
     @PostMapping("/save")
     public ResponseEntity<?> saveSnippet(@RequestBody Snippet snippet, HttpServletRequest request) {
@@ -80,5 +85,38 @@ public class SnippetController {
         List<Snippet> snippets = snippetRepository.findByUserId(user.getId());
         System.out.println("📦 Snippets found: " + snippets.size());
         return ResponseEntity.ok(snippets);
+    }
+
+    // ------------------------------------------------------------
+    // ✅ NEW: DELETE endpoint (uses JWT like other endpoints)
+    //    Deletes snippet only if it belongs to the authenticated user
+    //    URL: DELETE /api/snippets/{id}
+    //    Returns:
+    //      204 No Content -> deleted
+    //      401 Unauthorized -> missing/invalid token
+    //      404 Not Found   -> snippet not found or not owned by user
+    // ------------------------------------------------------------
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteSnippet(@PathVariable("id") Long id, HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Missing token"));
+        }
+
+        String token = authHeader.substring(7);
+        String username;
+        try {
+            username = jwtService.extractUsername(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        }
+
+        boolean deleted = snippetService.deleteSnippet(id, username);
+        if (deleted) {
+            return ResponseEntity.noContent().build(); // 204
+        } else {
+            // Either snippet not found, or not owned by this user
+            return ResponseEntity.status(404).body(Map.of("error", "Snippet not found or not owned by you"));
+        }
     }
 }

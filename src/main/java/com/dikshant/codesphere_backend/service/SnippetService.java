@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SnippetService {
@@ -32,5 +33,26 @@ public class SnippetService {
         List<Snippet> snippets = snippetRepository.findByUserId(user.getId());
         System.out.println("✅ Found " + snippets.size() + " snippets for user: " + username);
         return snippets;
+    }
+
+
+    // ------------------------------------------------------------
+    // ✅ NEW: Delete snippet by ID (with ownership check)
+    // ------------------------------------------------------------
+    public boolean deleteSnippet(Long snippetId, String username) {
+
+        // Step 1: Get user
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) return false;
+
+        // Step 2: Check if snippet belongs to this user
+        Snippet snippet = snippetRepository.findByIdAndUserId(snippetId, user.getId());
+        if (snippet == null) {
+            return false; // ❌ Not found OR not owned by this user
+        }
+
+        // Step 3: Delete it
+        snippetRepository.delete(snippet);
+        return true; // ✅ Successfully deleted
     }
 }
