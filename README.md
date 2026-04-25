@@ -167,15 +167,26 @@ http://localhost:8080
 
 ### 5. Docker Setup
 
-Build containers:
+Build each language container:
 
+```bash
+
+# Java
 docker build -t java-runner ./docker/java
-docker build -t python-runner ./docker/python
-docker build -t cpp-runner ./docker/cpp
-docker build -t c-runner ./docker/c
-docker build -t js-runner ./docker/javascript
 
----
+# Python
+docker build -t python-runner ./docker/python
+
+# C++
+docker build -t cpp-runner ./docker/cpp
+
+# C
+docker build -t c-runner ./docker/c
+
+# JavaScript
+docker build -t js-runner ./docker/javascript
+```
+
 
 ## Security Considerations
 
